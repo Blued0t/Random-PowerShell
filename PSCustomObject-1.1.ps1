@@ -22,7 +22,7 @@ PSCustomObjects-1.0.ps1
 
 #Create a PSCustomObject
 $me = [PSCustomObject]@{
-    Name     = 'Dave'
+    Name     = 'Jon'
     City     = 'Portsmouth'
     County   = 'Hants'
 }
