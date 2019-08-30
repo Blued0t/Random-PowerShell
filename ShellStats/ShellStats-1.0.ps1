@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
- 
+ Shows previous stats for teams based on Over/Under 2.5 goals
 
 .DESCRIPTION
   
@@ -32,15 +32,18 @@ param(
    #[String] $ConfigFile
    )
 
+Import-Module .\ImportExcel
 
 #----------------------------------------------------------[Declarations]----------------------------------------------------------
 
 $fixturesCsv = ".\fixtures.csv"
 $seasons = @("1819","1920")
-$previousGamesCount = @(20, 10, 6)
-$previousGamesCountAway = @(6, 10, 20)
+$previousGamesCount = @(18, 12, 6)
+$previousGamesCountAway = @(6, 12, 18)
 #$previousGamesCount = @(6)
 #$previousSeason = "1819"
+$leagues = @("B1", "D1", "D2", "E0", "E1", "E2", "E3", "EC", "F1", "F2", "G1", "I1", "I2", "N1", "P1", "SC0", "SC1", "SC2", "SC3", "SP1", "SP2", "T1")
+#$leagues = @("B1")
 
 #-----------------------------------------------------------[Functions]------------------------------------------------------------
 Function getHomeStats
@@ -52,9 +55,23 @@ Function getHomeStats
     $numberOfGamesToCheck
   )
 
+  #Check the team are in this league
+
+  if (-not(Get-Content .\1819\$league.csv| Select-String $homeTeamToCheck))
+  {
+    #Write-Verbose "Not found $homeTeamToCheck"
+    foreach ($lookUpLeague in $leagues)
+    {
+      #Write-Verbose "lookingfor $homeTeamToCheck in $lookUpLeague"
+      if ((Get-Content .\1819\$lookUpLeague.csv) | Select-String $homeTeamToCheck)
+      {
+        $league = $lookUpLeague
+      }
+    }
+  }
+
   $overs = 0
   $overallTotalGames = 0
-  $validResults = $false
 
   #get Total games over seasons
   foreach ($season in $seasons)
@@ -86,7 +103,7 @@ Function getHomeStats
           $totalGames += 1
           if (($overallTotalGames - $totalGames) -lt $numberOfGamesToCheck)
           {
-            $validResults = $true        
+     
             #Write-Verbose $homeTeamToCheck
             #Write-Verbose "$($currentGame.HomeTeam) v $($currentGame.AwayTeam)"
 
@@ -115,6 +132,19 @@ Function getAwayStats
     $awayTeamToCheck,
     $numberOfGamesToCheck
   )
+
+  if (-not(Get-Content .\1819\$league.csv | Select-String $awayTeamToCheck))
+  {
+    #Write-Verbose "Not found $homeTeamToCheck"
+    foreach ($lookUpLeague in $leagues)
+    {
+      #Write-Verbose "lookingfor $homeTeamToCheck in $lookUpLeague"
+      if ((Get-Content .\1819\$lookUpLeague.csv) | Select-String $awayTeamToCheck)
+      {
+        $league = $lookUpLeague
+      }
+    }
+  }
 
   $overs = 0
   $overallTotalGames = 0
@@ -172,6 +202,50 @@ Function getAwayStats
 #
 #-----------------------------------------------------------[Execution]------------------------------------------------------------
 
+Remove-Item .\ShellStats-Fixtures.csv -Force -ErrorAction:SilentlyContinue
+Remove-Item .\ShellStats-AllTeams.csv -Force -ErrorAction:SilentlyContinue
+
+#All teams
+foreach ($league in $leagues)
+{
+  $allLeagueGames = import-csv -Path .\1920\$league.csv
+  [System.Collections.ArrayList]$allTeams = @()
+  #$allTeams = @()
+  forEach ($currentGame in $allLeagueGames)
+  {
+    #Write-Verbose $currentGame.HomeTeam
+    $allTeams.Add($currentGame.HomeTeam) | Out-Null
+  } 
+  
+  $uniqueTeams = $allTeams | Sort-object | Get-Unique
+  $uniqueTeams
+
+  
+  foreach ($uniqueTeam in $uniqueTeams)
+  {
+    Write-Verbose $uniqueTeam
+    $line = ""
+    $line = $line + $league + ", "
+    foreach ($previousGameCount in $previousGamesCount)
+    {
+      $previousHomeStats = getHomeStats $league $uniqueTeam $previousGameCount
+      $line = $line + $previousHomeStats + ", "
+    }
+    $line = $line + $uniqueTeam + ", " 
+    foreach ($previousGameCount in $previousGamesCountAway)
+    {
+      $previousAwayStats = getAwayStats $league $uniqueTeam $previousGameCount
+      $line = $line + $previousAwayStats + ", "
+    }
+    $line
+    $line | Out-File .\ShellStats-AllTeams.csv -Append -Encoding utf8
+  } 
+}
+
+
+
+
+
 $fixtures = Import-Csv -Path $fixturesCsv
 
 foreach ($fixture in $fixtures)
@@ -198,8 +272,12 @@ foreach ($fixture in $fixtures)
     #Write-Output $fixture.HomeTeam
   }
 
+  $line | Out-File .\ShellStats-Fixtures.csv -Append -Encoding utf8
+
   Write-Verbose $line
 
 }
+
+
 
 
