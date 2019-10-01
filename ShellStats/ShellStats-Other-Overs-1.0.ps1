@@ -174,40 +174,43 @@ Remove-Item ".\Overs OtherLeagues Fixtures.csv" -Force -ErrorAction:SilentlyCont
 
 
 #All teams
-foreach ($league in $leagues)
-{
-  $allLeagueGames = import-csv -Path .\Other\$league.csv
-  [System.Collections.ArrayList]$allTeams = @()
-  #$allTeams = @()
-  forEach ($currentGame in $allLeagueGames)
+if ($false)
   {
-    #Write-Verbose $currentGame.HomeTeam
-    $allTeams.Add($currentGame.Home) | Out-Null
-  } 
-  
-  $uniqueTeams = $allTeams | Sort-object | Get-Unique
-  $uniqueTeams
+  foreach ($league in $leagues)
+  {
+    $allLeagueGames = import-csv -Path .\Other\$league.csv
+    [System.Collections.ArrayList]$allTeams = @()
+    #$allTeams = @()
+    forEach ($currentGame in $allLeagueGames)
+    {
+      #Write-Verbose $currentGame.HomeTeam
+      $allTeams.Add($currentGame.Home) | Out-Null
+    } 
+    
+    $uniqueTeams = $allTeams | Sort-object | Get-Unique
+    $uniqueTeams
 
-  
-  foreach ($uniqueTeam in $uniqueTeams)
-  {
-    Write-Verbose $uniqueTeam
-    $line = ""
-    $line = $line + $league + ", "
-    foreach ($previousGameCount in $previousGamesCount)
+    
+    foreach ($uniqueTeam in $uniqueTeams)
     {
-      $previousHomeStats = getHomeStats $league $uniqueTeam $previousGameCount
-      $line = $line + $previousHomeStats + ", "
-    }
-    $line = $line + $uniqueTeam + ", " 
-    foreach ($previousGameCount in $previousGamesCountAway)
-    {
-      $previousAwayStats = getAwayStats $league $uniqueTeam $previousGameCount
-      $line = $line + $previousAwayStats + ", "
-    }
-    $line
-    $line | Out-File .\"Overs OtherLeagues AllTeams.csv" -Append -Encoding utf8
-  } 
+      Write-Verbose $uniqueTeam
+      $line = ""
+      $line = $line + $league + ", "
+      foreach ($previousGameCount in $previousGamesCount)
+      {
+        $previousHomeStats = getHomeStats $league $uniqueTeam $previousGameCount
+        $line = $line + $previousHomeStats + ", "
+      }
+      $line = $line + $uniqueTeam + ", " 
+      foreach ($previousGameCount in $previousGamesCountAway)
+      {
+        $previousAwayStats = getAwayStats $league $uniqueTeam $previousGameCount
+        $line = $line + $previousAwayStats + ", "
+      }
+      $line
+      $line | Out-File .\"Overs OtherLeagues AllTeams.csv" -Append -Encoding utf8
+    } 
+  }
 }
 
 
@@ -220,6 +223,7 @@ foreach ($fixture in $fixtures)
   $currentLeague = $fixture.Country
   if ($currentLeague -eq "Argentina"){ $currentLeague = "ARG" }
   if ($currentLeague -eq "Austria"){ $currentLeague = "AUT" }
+  if ($currentLeague -eq "China"){ $currentLeague = "CHN" }
   if ($currentLeague -eq "Brazil"){ $currentLeague = "BRA" }
   if ($currentLeague -eq "Denmark"){ $currentLeague = "DNK" }
   if ($currentLeague -eq "Finland"){ $currentLeague = "FIN" }
